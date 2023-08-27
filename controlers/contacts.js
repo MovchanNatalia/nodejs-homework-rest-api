@@ -1,16 +1,21 @@
 const { Contact } = require("../models/contact");
-
 const { HttpError, ctrlWrapper } = require("../helpers");
 
 const getAll = async (req, res) => {
   const { _id: owner } = req.user;
   const { page = 1, limit = 20 } = req.query;
   const skip = (page - 1) * limit;
+  const totalContacts = await Contact.countDocuments({ owner });
   const result = await Contact.find({ owner }, "-createdAt -updateAt", {
     skip,
     limit,
   }).populate("owner", "email");
-  res.json(result);
+  res.json({
+    totalContacts,
+    currentPage: page,
+    totalPages: Math.ceil(totalContacts / limit),
+    contacts: result,
+  });
 };
 
 const getContactById = async (req, res) => {
